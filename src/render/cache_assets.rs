@@ -171,7 +171,7 @@ pub fn prepare_geometry(template: &SimulationTemplate) -> Result<PreparedGeometr
         let prepared = geometry.prepared.get_or_init(|| {
             let symmetry = FaceSymmetries::new(*kind, &template.orientations, &geometry.vertices)
                 .map_err(|_| RollFailure::InvalidGeometry)?;
-            let collider = Collider::convex_hull(geometry.vertices.to_vec()).ok_or(RollFailure::InvalidGeometry)?;
+            let collider = Collider::convex_hull(&geometry.vertices).ok_or(RollFailure::InvalidGeometry)?;
             Ok((collider, Arc::new(symmetry)))
         });
         let (collider, symmetry) = prepared.as_ref().map_err(Clone::clone)?;

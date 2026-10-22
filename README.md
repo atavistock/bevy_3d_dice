@@ -1,6 +1,6 @@
 # bevy_dice
 
-Physics-driven dice for Bevy 0.19. Parse a dice expression, roll it in an arena, watch the dice tumble and settle, read the result.
+Physics-driven dice for Bevy 0.20. Parse a dice expression, roll it in an arena, watch the dice tumble and settle, read the result.
 
 - `dice`: expression parsing and roll math, usable headless.
 - `sim`: background physics on `avian3d`, recorded as packed trajectories. The host world needs no physics plugin.
@@ -11,7 +11,7 @@ Physics-driven dice for Bevy 0.19. Parse a dice expression, roll it in an arena,
 
 ```toml
 [dependencies]
-bevy = "0.19"
+bevy = "0.20"
 bevy_dice = { version = "0.4", features = ["plain_white"] }
 ```
 

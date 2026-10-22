@@ -226,7 +226,7 @@ mod tests {
                 })
                 .collect();
             check_all_pairs(kind, &orientations, &vertices);
-            let collider = avian3d::prelude::Collider::convex_hull(vertices).expect("bundled hull");
+            let collider = avian3d::prelude::Collider::convex_hull(&vertices).expect("bundled hull");
             for count in if kind == DieKind::D20 { vec![1, 4, 20] } else { vec![1] } {
                 let recording = crate::sim::simulate_throw(crate::sim::SimulationInput {
                     arena: crate::sim::SimulationArena {

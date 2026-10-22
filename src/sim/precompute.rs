@@ -138,7 +138,7 @@ fn validate_input(input: &SimulationInput) -> Result<f32, SimulationError> {
     }
     let mut radius = 0.0_f32;
     for collider in &input.colliders {
-        let bounds = collider.aabb(Vec3::ZERO, Quat::IDENTITY);
+        let bounds = collider.aabb(Vec3::ZERO, Quat::IDENTITY, 0.0);
         let extent = bounds.min.abs().max(bounds.max.abs());
         if !extent.is_finite() || extent.min_element() <= 0.0 {
             return Err(SimulationError::InvalidInput);
@@ -163,7 +163,7 @@ fn simulation_app(input: &SimulationInput) -> App {
     app.init_resource::<Assets<Mesh>>();
     app.insert_resource(Gravity(input.gravity));
     // Async tree tasks would wait on the pool that may already be full of simulations.
-    app.insert_resource(ColliderTreeOptimization { use_async_tasks: false, ..default() });
+    app.insert_resource(ColliderTreeOptimization { use_compute_task: false, ..default() });
     app.insert_resource(Time::<Fixed>::from_hz(PHYSICS_HZ as f64));
     app.insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f64(1.0 / PHYSICS_HZ as f64)));
     let arena = &input.arena;
@@ -232,7 +232,7 @@ fn record_until_settled(
                 settled = false;
                 continue;
             }
-            if !inside_arena(&input.arena, input.colliders[idx].aabb(position, rotation)) {
+            if !inside_arena(&input.arena, input.colliders[idx].aabb(position, rotation, 0.0)) {
                 return None;
             }
             if flatness(input, idx, rotation) < 0.985 {
