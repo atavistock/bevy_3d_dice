@@ -7,6 +7,12 @@ Physics-driven dice for Bevy 0.20. Parse a dice expression, roll it in an arena,
 - `render`: dicesets, arenas, roll queues, and playback.
 - Standard polyhedral set: d4, d6, d8, d10, d12, d20, d100 (a tens die plus a d10).
 
+## Breaking changes in 0.5.0
+
+- `Options::modifier_for` takes an `Explosion` (`Explosion::Available` or `Explosion::Spent`) instead of a `bool`.
+- `DiceOrientations::faces` returns `&[Face]`, with `label` and `direction` fields, instead of `(String, Vec3)` pairs.
+- `SpawnConfig` drops the unused `height_above_box`, `outside_box_buffer`, `z_spread_fraction`, `y_jitter`, `z_velocity_jitter_fraction`, and `pair_z_offset` fields. Remove them from any struct literals; they never affected a throw.
+
 ## Add to your project
 
 ```toml

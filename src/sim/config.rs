@@ -48,45 +48,26 @@ impl Default for DicePhysicsConfig {
 /// Tunables for the throw when dice enter an arena.
 #[derive(Clone, Reflect)]
 pub struct SpawnConfig {
-    /// Height above the box ceiling where dice begin their arc.
-    pub height_above_box: f32,
     /// Magnitude of the inward horizontal velocity at entry.
     pub speed: f32,
-    /// Distance beyond the box wall where dice spawn.
-    pub outside_box_buffer: f32,
-    /// Random z position spread as a fraction of `size.z` (centered range).
-    pub z_spread_fraction: f32,
-    /// Random vertical jitter applied below `height_above_box`.
-    pub y_jitter: f32,
     /// Minimum horizontal-speed multiplier on `speed`.
     pub speed_min_factor: f32,
     /// Additional random range added to the speed multiplier.
     pub speed_jitter: f32,
     /// Initial downward velocity as a fraction of `speed`.
     pub vertical_velocity_fraction: f32,
-    /// Random z-velocity spread as a fraction of `speed` (centered range).
-    pub z_velocity_jitter_fraction: f32,
     /// Angular speed magnitude relative to `speed`.
     pub angular_speed_factor: f32,
-    /// Z-offset between the two members of a d100 pair so they don't spawn
-    /// inside each other.
-    pub pair_z_offset: f32,
 }
 
 impl Default for SpawnConfig {
     fn default() -> Self {
         Self {
-            height_above_box: 2.5,
             speed: 8.0,
-            outside_box_buffer: 1.2,
-            z_spread_fraction: 0.6,
-            y_jitter: 0.8,
             speed_min_factor: 0.85,
             speed_jitter: 0.3,
             vertical_velocity_fraction: 0.15,
-            z_velocity_jitter_fraction: 0.35,
             angular_speed_factor: 0.9,
-            pair_z_offset: 0.5,
         }
     }
 }

@@ -121,7 +121,6 @@ fn validate_input(input: &SimulationInput) -> Result<f32, SimulationError> {
         arena.spawn.speed_min_factor,
         arena.spawn.speed_jitter,
         arena.spawn.vertical_velocity_fraction,
-        arena.spawn.z_velocity_jitter_fraction,
     ];
     if input.kinds.is_empty()
         || input.kinds.len() > MAX_DICE_PER_ROLL

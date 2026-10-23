@@ -13,7 +13,7 @@ use bevy::{
 };
 
 use crate::dice::DieKind;
-use crate::sim::{DiceOrientations, Face, FaceSymmetries, RecordedThrow};
+use crate::sim::{DiceOrientations, Face, FaceSymmetries, RecordedThrow, SimulationArena};
 
 use super::{arena::DiceArena, cached_roll::RollFailure, diceset::Diceset};
 
@@ -26,7 +26,7 @@ pub struct CacheKey {
 /// Simulation inputs of an arena; meshes are indexed by [`DieKind::mesh_index`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArenaStamp {
-    configuration: [u32; 24],
+    configuration: [u32; 18],
     diceset: Entity,
     meshes: [Option<AssetId<Mesh>>; DieKind::ALL.len()],
     orientations: DiceOrientations,
@@ -130,7 +130,7 @@ pub fn current_stamp(world: &World, key: &CacheKey) -> Result<Option<ArenaStamp>
         }
         mesh_ids[kind.mesh_index()] = Some(mesh.id());
     }
-    Ok(ready.then(|| make_stamp(arena, gravity(world), mesh_ids, &diceset.orientations)))
+    Ok(ready.then(|| make_stamp(&arena.into(), arena.diceset, gravity(world), mesh_ids, &diceset.orientations)))
 }
 
 /// Copy ready mesh positions and arena inputs for use outside the main world.
@@ -248,7 +248,8 @@ fn face_bits(faces: &[Face]) -> Vec<FaceBits> {
 }
 
 fn make_stamp(
-    arena: &DiceArena,
+    arena: &SimulationArena,
+    diceset: Entity,
     gravity: Vec3,
     meshes: [Option<AssetId<Mesh>>; DieKind::ALL.len()],
     orientations: &DiceOrientations,
@@ -267,20 +268,14 @@ fn make_stamp(
         arena.physics.friction,
         arena.physics.angular_damping,
         arena.physics.linear_damping,
-        arena.spawn.height_above_box,
         arena.spawn.speed,
-        arena.spawn.outside_box_buffer,
-        arena.spawn.z_spread_fraction,
-        arena.spawn.y_jitter,
         arena.spawn.speed_min_factor,
         arena.spawn.speed_jitter,
         arena.spawn.vertical_velocity_fraction,
-        arena.spawn.z_velocity_jitter_fraction,
         arena.spawn.angular_speed_factor,
-        arena.spawn.pair_z_offset,
     ]
     .map(f32::to_bits);
-    ArenaStamp { configuration, diceset: arena.diceset, meshes, orientations: orientations.clone() }
+    ArenaStamp { configuration, diceset, meshes, orientations: orientations.clone() }
 }
 
 #[cfg(test)]
@@ -305,7 +300,7 @@ mod tests {
         }
         let kinds = vec![DieKind::D6, DieKind::D6];
         let gravity = Vec3::NEG_Y * 23.1;
-        let stamp = make_stamp(&arena, gravity, Default::default(), &orientations);
+        let stamp = make_stamp(&(&arena).into(), arena.diceset, gravity, Default::default(), &orientations);
         let geometry = Arc::new(SharedGeometry { vertices: vertices.into_boxed_slice(), prepared: OnceLock::new() });
         SimulationTemplate { arena, kinds, gravity, geometry: vec![geometry.clone(), geometry], orientations, stamp }
     }
@@ -315,10 +310,22 @@ mod tests {
         let mut template = template();
         template.arena.name = "renamed".into();
         template.arena.render_layer = Some(3);
-        let stamp = make_stamp(&template.arena, template.gravity, Default::default(), &template.orientations);
+        let stamp = make_stamp(
+            &(&template.arena).into(),
+            template.arena.diceset,
+            template.gravity,
+            Default::default(),
+            &template.orientations,
+        );
         assert_eq!(stamp, template.stamp);
         template.arena.spawn.speed += 1.0;
-        let stamp = make_stamp(&template.arena, template.gravity, Default::default(), &template.orientations);
+        let stamp = make_stamp(
+            &(&template.arena).into(),
+            template.arena.diceset,
+            template.gravity,
+            Default::default(),
+            &template.orientations,
+        );
         assert_ne!(stamp, template.stamp);
     }
 
