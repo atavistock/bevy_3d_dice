@@ -1,5 +1,6 @@
 [package]
 name = "bevy_dice"
+description = "Physics-driven dice for Bevy 0.20. Parse a dice expression, roll it in an arena, watch the dice tumble and settle, read the result."
 version = "0.5.0"
 edition = "2024"
 license = "BSD-2-Clause-Patent"
