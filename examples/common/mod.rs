@@ -16,7 +16,7 @@
 use bevy::camera::visibility::RenderLayers;
 use bevy::input::keyboard::{Key, KeyboardInput};
 use bevy::prelude::*;
-use bevy_dice::render::DiceArena;
+use bevy_3d_dice::render::DiceArena;
 
 // === Cameras ===
 
@@ -152,8 +152,8 @@ fn smoke_test(
     arenas: Query<&DiceArena>,
     inputs: Query<Entity, With<TextInput>>,
     mut submissions: Option<ResMut<Messages<TextInputSubmitted>>>,
-    mut completed: MessageReader<bevy_dice::render::RollComplete>,
-    mut failed: MessageReader<bevy_dice::render::RollFailed>,
+    mut completed: MessageReader<bevy_3d_dice::render::RollComplete>,
+    mut failed: MessageReader<bevy_3d_dice::render::RollFailed>,
     mut commands: Commands,
 ) {
     use bevy::render::view::screenshot::{Screenshot, ScreenshotCaptured, save_to_disk};

@@ -80,7 +80,7 @@ pub struct NextRollId {
 /// [`DefaultArena`]; [`roll_in`](Self::roll_in) targets a specific arena.
 ///
 /// ```no_run
-/// # use bevy_dice::{dice::DiceRoll, render::DiceRoller};
+/// # use bevy_3d_dice::{dice::DiceRoll, render::DiceRoller};
 /// fn cast(mut roller: DiceRoller) {
 ///     let _ = roller.roll(DiceRoll::parse("3d6").unwrap());
 /// }
@@ -150,7 +150,7 @@ impl<'w, 's> DiceRoller<'w, 's> {
     /// roll for one-liner call sites.
     ///
     /// ```no_run
-    /// # use bevy_dice::render::DiceRoller;
+    /// # use bevy_3d_dice::render::DiceRoller;
     /// fn cast(mut roller: DiceRoller) {
     ///     let _ = roller.roll_expr("3d6+2");
     /// }

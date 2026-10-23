@@ -49,7 +49,7 @@ impl Diceset {
                 panic!("embedded diceset '{slug}' not available - enable the matching cargo feature")
             });
         Diceset {
-            asset_path: format!("embedded://bevy_dice/{name}_diceset.glb"),
+            asset_path: format!("embedded://bevy_3d_dice/{name}_diceset.glb"),
             orientations: load_orientations_from_bytes(bytes),
             handles: None,
         }

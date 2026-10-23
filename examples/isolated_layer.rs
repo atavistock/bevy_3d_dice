@@ -11,7 +11,7 @@
 //! Run: `cargo run --example isolated_layer --features plain_white`
 
 use bevy::prelude::*;
-use bevy_dice::render::{DefaultArena, DiceArena, DicePlugin, DiceRoller, Diceset};
+use bevy_3d_dice::render::{DefaultArena, DiceArena, DicePlugin, DiceRoller, Diceset};
 
 #[path = "common/mod.rs"]
 mod common;

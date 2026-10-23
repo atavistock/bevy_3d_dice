@@ -10,8 +10,8 @@
 
 use bevy::input::keyboard::KeyboardInput;
 use bevy::prelude::*;
-use bevy_dice::render::{DiceArena, DicePlugin, DiceRoller, Diceset, RollComplete, SpawnedDie};
-use bevy_dice::sim::SpawnConfig;
+use bevy_3d_dice::render::{DiceArena, DicePlugin, DiceRoller, Diceset, RollComplete, SpawnedDie};
+use bevy_3d_dice::sim::SpawnConfig;
 
 #[path = "common/mod.rs"]
 mod common;

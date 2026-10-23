@@ -835,7 +835,7 @@ mod tests {
 
     #[test]
     fn warming_uses_base_composition_and_preserves_gameplay_rng() {
-        use rand::RngCore;
+        use rand::Rng;
         let (mut app, arena, _) = fixture();
         let world = app.world_mut();
         world.init_resource::<Messages<RollRequest>>();

@@ -1,4 +1,4 @@
-//! The smallest possible bevy_dice setup: add the plugin, spawn a camera,
+//! The smallest possible bevy_3d_dice setup: add the plugin, spawn a camera,
 //! roll once. With the `plain_white` feature enabled, `DicePlugin` auto-
 //! spawns both a `Diceset` entity and a `DiceArena` tagged as the default,
 //! so `roller.roll_expr(...)` has somewhere to throw the dice.
@@ -6,7 +6,7 @@
 //! Run: `cargo run --example simple_d20 --features plain_white`
 
 use bevy::prelude::*;
-use bevy_dice::render::{DicePlugin, DiceRoller};
+use bevy_3d_dice::render::{DicePlugin, DiceRoller};
 
 #[path = "common/mod.rs"]
 mod common;

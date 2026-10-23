@@ -1,4 +1,4 @@
-# bevy_dice
+# bevy_3d_dice
 
 Physics-driven dice for Bevy 0.20. Parse a dice expression, roll it in an arena, watch the dice tumble and settle, read the result.
 
@@ -18,7 +18,7 @@ Physics-driven dice for Bevy 0.20. Parse a dice expression, roll it in an arena,
 ```toml
 [dependencies]
 bevy = "0.20"
-bevy_dice = { version = "0.4", features = ["plain_white"] }
+bevy_3d_dice = { version = "0.4", features = ["plain_white"] }
 ```
 
 Each diceset feature bakes a `.glb` into the binary:
@@ -64,7 +64,7 @@ Parse errors: a leading `+` or `-`, no dice term (`ParseError::NoDice`), an adju
 
 ```rust
 use bevy::prelude::*;
-use bevy_dice::render::RollComplete;
+use bevy_3d_dice::render::RollComplete;
 
 fn report(mut completed: MessageReader<RollComplete>) {
     for event in completed.read() {
@@ -87,8 +87,8 @@ fn report(mut completed: MessageReader<RollComplete>) {
 Decide the faces yourself (a server roll, a replay, a scripted moment) and the dice land on them. The throw is still a recorded physics trajectory; each die is pre-rotated by a symmetry of its mesh so the requested face settles on top.
 
 ```rust
-use bevy_dice::dice::{DiceRoll, DieKind, RollOutcome, RolledDie};
-use bevy_dice::render::DiceRoller;
+use bevy_3d_dice::dice::{DiceRoll, DieKind, RollOutcome, RolledDie};
+use bevy_3d_dice::render::DiceRoller;
 
 fn cast(mut roller: DiceRoller) {
     let roll = DiceRoll::parse("2d6+3").unwrap();
@@ -115,7 +115,7 @@ Generated rolls play the same way, so every diceset needs numeric face labels in
 ## Custom arenas
 
 ```rust
-use bevy_dice::render::{DefaultArena, DiceArena, Diceset};
+use bevy_3d_dice::render::{DefaultArena, DiceArena, Diceset};
 
 fn setup(mut commands: Commands) {
     let diceset = commands.spawn(Diceset::embedded("halloween")).id();
@@ -155,7 +155,7 @@ Dice and their overhead light spawn on render layer `0` by default. Move them to
 ```rust
 use bevy::camera::visibility::RenderLayers;
 use bevy::prelude::*;
-use bevy_dice::render::{DefaultArena, DiceArena, DicePlugin, Diceset};
+use bevy_3d_dice::render::{DefaultArena, DiceArena, DicePlugin, Diceset};
 
 const DICE_LAYER: u8 = 1;
 
@@ -184,7 +184,7 @@ App::new()
 ## Roll options
 
 ```rust
-use bevy_dice::dice::{DiceRoll, Options};
+use bevy_3d_dice::dice::{DiceRoll, Options};
 
 let roll = DiceRoll::parse("4d6").unwrap()
     .with_options(Options::default().with_keep_highest(3));
@@ -201,7 +201,7 @@ Shorthands: `DiceRoll::with_explode()`, `with_reroll_ones()`, and `DiceRoll::adv
 Gameplay outcomes draw from `DiceRng` (any boxed `RngCore`); simulation seeds draw from the independent `DiceSimulationRng`, so warming and refills never advance the gameplay stream. Both default to entropy. Seed either one for repeatable results:
 
 ```rust
-use bevy_dice::render::{DiceRng, DiceSimulationRng};
+use bevy_3d_dice::render::{DiceRng, DiceSimulationRng};
 app.insert_resource(DiceRng::from_seed(0xD1CE));
 app.insert_resource(DiceSimulationRng::from_seed(0xD1CE));
 ```
@@ -211,7 +211,7 @@ app.insert_resource(DiceSimulationRng::from_seed(0xD1CE));
 If you only need the numbers, skip `DicePlugin`:
 
 ```rust
-use bevy_dice::dice::DiceRoll;
+use bevy_3d_dice::dice::DiceRoll;
 
 let total = DiceRoll::parse("3d6+2").unwrap().roll(&mut rand::thread_rng());
 ```

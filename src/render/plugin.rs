@@ -115,7 +115,7 @@ fn register_embedded_dicesets(app: &mut App) {
              Add DefaultPlugins before DicePlugin.",
     );
     for (name, bytes) in table {
-        let asset_path = format!("bevy_dice/{name}_diceset.glb");
+        let asset_path = format!("bevy_3d_dice/{name}_diceset.glb");
         embedded.insert_asset(std::path::PathBuf::new(), std::path::Path::new(&asset_path), *bytes);
     }
 }

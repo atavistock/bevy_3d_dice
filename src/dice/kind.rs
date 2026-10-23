@@ -1,7 +1,7 @@
 use std::fmt;
 
 use bevy::reflect::Reflect;
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 /// Standard polyhedral die. d100 rolls 1..=100; the visual layer renders
 /// it as a d100 + d10 pair.
@@ -68,7 +68,7 @@ impl DieKind {
 
     /// Uniform roll in `1..=sides()`. D100 returns 1..=100 as one number.
     pub fn roll<R: Rng + ?Sized>(self, rng: &mut R) -> u32 {
-        rng.gen_range(1..=self.sides())
+        rng.random_range(1..=self.sides())
     }
 }
 

@@ -12,7 +12,7 @@
 
 use bevy::camera::ScalingMode;
 use bevy::prelude::*;
-use bevy_dice::render::{DicePlugin, DiceRoller, RollComplete, RollError, RollFailed, SpawnedDie};
+use bevy_3d_dice::render::{DicePlugin, DiceRoller, RollComplete, RollError, RollFailed, SpawnedDie};
 
 #[path = "common/mod.rs"]
 mod common;

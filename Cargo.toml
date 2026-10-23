@@ -1,9 +1,10 @@
 [package]
-name = "bevy_dice"
+name = "bevy_3d_dice"
 description = "Physics-driven dice for Bevy 0.20. Parse a dice expression, roll it in an arena, watch the dice tumble and settle, read the result."
 version = "0.5.0"
 edition = "2024"
 license = "BSD-2-Clause-Patent"
+repository = "https://github.com/atavistock/bevy-3d-dice"
 
 [features]
 # Each feature embeds the indicated diceset gltf into the binary so callers
@@ -31,7 +32,7 @@ bevy = { version = "0.20", default-features = false, features = [
   "jpeg",
   "png",
 ] }
-rand = "0.8"
+rand = "0.10"
 # Used only to read the `extras.dice_orientations` JSON block out of diceset
 # gltf files. Already in the dependency tree via bevy's gltf loader.
 serde_json = "1"

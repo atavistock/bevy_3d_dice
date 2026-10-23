@@ -8,7 +8,7 @@ use bevy::{
     prelude::*,
     time::TimeUpdateStrategy,
 };
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 
 use super::{DiceOrientations, MAX_DICE_PER_ROLL, SimulationArena};
 use crate::dice::DieKind;
@@ -277,7 +277,7 @@ fn spawn_positions(input: &SimulationInput, radius: f32) -> Vec<Vec3> {
 
 /// Uniform-angle Euler rotation for a freshly spawned die.
 fn random_rotation(random: &mut StdRng) -> Quat {
-    Quat::from_euler(EulerRot::XYZ, random.gen_range(0.0..TAU), random.gen_range(0.0..TAU), random.gen_range(0.0..TAU))
+    Quat::from_euler(EulerRot::XYZ, random.random_range(0.0..TAU), random.random_range(0.0..TAU), random.random_range(0.0..TAU))
 }
 
 /// Spawns die `idx` at `rotation` with an inward throw and spin.
@@ -292,7 +292,7 @@ fn spawn_die(
     let arena = &input.arena;
     let inward = (arena.center - position).with_y(0.0).normalize_or_zero();
     let speed =
-        arena.spawn.speed * (arena.spawn.speed_min_factor + random.gen_range(0.0..1.0) * arena.spawn.speed_jitter);
+        arena.spawn.speed * (arena.spawn.speed_min_factor + random.random_range(0.0..1.0) * arena.spawn.speed_jitter);
     let velocity = inward * speed * (0.15 / (input.kinds.len() as f32).sqrt())
         + Vec3::NEG_Y * arena.spawn.speed * arena.spawn.vertical_velocity_fraction;
     let angular = random_unit(random) * arena.spawn.speed * arena.spawn.angular_speed_factor;
@@ -358,8 +358,8 @@ fn nudge(app: &mut App, entity: Entity, random: &mut StdRng) {
 }
 
 fn random_unit(random: &mut StdRng) -> Vec3 {
-    let angle = random.gen_range(0.0..TAU);
-    let cosine: f32 = random.gen_range(-1.0..1.0);
+    let angle = random.random_range(0.0..TAU);
+    let cosine: f32 = random.random_range(-1.0..1.0);
     let sine = (1.0 - cosine * cosine).sqrt();
     Vec3::new(sine * angle.cos(), cosine, sine * angle.sin())
 }
