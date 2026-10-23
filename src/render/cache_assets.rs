@@ -13,7 +13,7 @@ use bevy::{
 };
 
 use crate::dice::DieKind;
-use crate::sim::{DiceOrientations, FaceSymmetries, RecordedThrow};
+use crate::sim::{DiceOrientations, Face, FaceSymmetries, RecordedThrow};
 
 use super::{arena::DiceArena, cached_roll::RollFailure, diceset::Diceset};
 
@@ -64,7 +64,14 @@ pub struct SharedGeometry {
 struct GeometryKey {
     mesh: AssetId<Mesh>,
     kind: DieKind,
-    faces: Vec<(String, [u32; 3])>,
+    faces: Vec<FaceBits>,
+}
+
+/// Hashable copy of a [`Face`], comparing directions bit for bit.
+#[derive(Clone, Eq, PartialEq, Hash)]
+struct FaceBits {
+    label: String,
+    direction: [u32; 3],
 }
 
 /// Weak entries share geometry without extending the lifetime of unused meshes.
@@ -204,8 +211,8 @@ pub fn corrections(
                 .orientations
                 .faces(*kind)
                 .iter()
-                .find(|(label, _)| label.parse::<u32>() == Ok(*value))
-                .map(|(label, _)| label.as_str())
+                .find(|face| face.label.parse::<u32>() == Ok(*value))
+                .map(|face| face.label.as_str())
                 .ok_or(RollFailure::InvalidGeometry)?;
             let rotation = recording.final_rotation(index).ok_or(RollFailure::SimulationFailed)?;
             geometry.symmetries[index].correction(label, rotation).ok_or(RollFailure::InvalidGeometry)
@@ -233,8 +240,11 @@ fn asset_ready(asset_server: Option<&AssetServer>, id: UntypedAssetId) -> Result
         ))
 }
 
-fn face_bits(faces: &[(String, Vec3)]) -> Vec<(String, [u32; 3])> {
-    faces.iter().map(|(label, direction)| (label.clone(), direction.to_array().map(f32::to_bits))).collect()
+fn face_bits(faces: &[Face]) -> Vec<FaceBits> {
+    faces
+        .iter()
+        .map(|face| FaceBits { label: face.label.clone(), direction: face.direction.to_array().map(f32::to_bits) })
+        .collect()
 }
 
 fn make_stamp(
@@ -334,7 +344,7 @@ mod tests {
         let first = shared.get(key.clone(), &meshes).expect("geometry");
         let again = shared.get(key.clone(), &meshes).expect("same geometry");
         assert!(Arc::ptr_eq(&first, &again));
-        key.faces[0].0 = "changed".into();
+        key.faces[0].label = "changed".into();
         let changed = shared.get(key, &meshes).expect("changed metadata");
         assert!(!Arc::ptr_eq(&first, &changed));
         drop(first);

@@ -9,10 +9,17 @@ use bevy::math::{Quat, Vec3};
 
 use crate::dice::DieKind;
 
+/// One labeled face and its outward direction in die-local space.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Face {
+    pub label: String,
+    pub direction: Vec3,
+}
+
 /// Per-kind face directions (local space), keyed by face label. Clones share one table.
 #[derive(Default, Clone, Debug)]
 pub struct DiceOrientations {
-    by_kind: Arc<HashMap<DieKind, Vec<(String, Vec3)>>>,
+    by_kind: Arc<HashMap<DieKind, Vec<Face>>>,
 }
 
 impl PartialEq for DiceOrientations {
@@ -22,8 +29,8 @@ impl PartialEq for DiceOrientations {
 }
 
 impl DiceOrientations {
-    /// All `(label, local-direction)` pairs for `kind`.
-    pub fn faces(&self, kind: DieKind) -> &[(String, Vec3)] {
+    /// All faces of `kind`.
+    pub fn faces(&self, kind: DieKind) -> &[Face] {
         self.by_kind.get(&kind).map(|faces| faces.as_slice()).unwrap_or(&[])
     }
 
@@ -31,10 +38,10 @@ impl DiceOrientations {
     pub fn up_face(&self, kind: DieKind, rotation: Quat) -> Option<&str> {
         let faces = self.by_kind.get(&kind)?;
         let mut best: Option<(f32, &str)> = None;
-        for (label, direction) in faces {
-            let world_y = (rotation * *direction).y;
+        for face in faces {
+            let world_y = (rotation * face.direction).y;
             if best.is_none_or(|(best_y, _)| world_y > best_y) {
-                best = Some((world_y, label.as_str()));
+                best = Some((world_y, face.label.as_str()));
             }
         }
         best.map(|(_, label)| label)
@@ -67,7 +74,7 @@ pub fn load_orientations_from_bytes(bytes: &[u8]) -> DiceOrientations {
     else {
         return DiceOrientations::default();
     };
-    let mut by_kind: HashMap<DieKind, Vec<(String, Vec3)>> = HashMap::new();
+    let mut by_kind: HashMap<DieKind, Vec<Face>> = HashMap::new();
     for (die_name, faces) in table {
         let Some(kind) = DieKind::from_asset_name(die_name) else { continue };
         let Some(faces) = faces.as_object() else { continue };
@@ -83,7 +90,7 @@ pub fn load_orientations_from_bytes(bytes: &[u8]) -> DiceOrientations {
             if raw.length_squared() < 1e-6 {
                 continue;
             }
-            by_kind.entry(kind).or_default().push((label.clone(), raw.normalize()));
+            by_kind.entry(kind).or_default().push(Face { label: label.clone(), direction: raw.normalize() });
         }
     }
     DiceOrientations { by_kind: Arc::new(by_kind) }
@@ -127,8 +134,8 @@ mod tests {
     fn directions_are_normalized() {
         let json = r#"{"extras":{"dice_orientations":{"d6":{"1":[0.0,5.0,0.0]}}}}"#;
         let orientations = load_orientations_from_bytes(json.as_bytes());
-        let (_, direction) = &orientations.faces(DieKind::D6)[0];
-        assert!((direction.length() - 1.0).abs() < 1e-5);
+        let face = &orientations.faces(DieKind::D6)[0];
+        assert!((face.direction.length() - 1.0).abs() < 1e-5);
     }
 
     #[test]

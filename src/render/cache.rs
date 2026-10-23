@@ -110,7 +110,7 @@ impl PrecomputeCache {
         validate_roll(&request.roll).map_err(RollFailure::InvalidOutcome)?;
         let outcome = request.outcome.unwrap_or_else(|| request.roll.roll_detailed(rng));
         validate_outcome(&request.roll, &outcome).map_err(RollFailure::InvalidOutcome)?;
-        let (kinds, values) = physical_dice(&outcome);
+        let PhysicalDice { kinds, values } = physical_dice(&outcome);
         let key = CacheKey { arena: request.arena, kinds };
         if !key.kinds.is_empty() {
             self.entries.entry(key.clone()).or_default().failure = None;
@@ -381,7 +381,13 @@ fn spawn_playback(
     Playback { request, template, recording, rotations, entities, elapsed: 0.0 }
 }
 
-fn physical_dice(outcome: &RollOutcome) -> (Vec<DieKind>, Vec<u32>) {
+/// Dice as thrown, sorted by mesh index; a d100 splits into tens and ones dice.
+struct PhysicalDice {
+    kinds: Vec<DieKind>,
+    values: Vec<u32>,
+}
+
+fn physical_dice(outcome: &RollOutcome) -> PhysicalDice {
     let mut dice = Vec::new();
     for die in outcome.dice.iter() {
         match die.kind {
@@ -394,7 +400,8 @@ fn physical_dice(outcome: &RollOutcome) -> (Vec<DieKind>, Vec<u32>) {
         }
     }
     dice.sort_by_key(|(kind, _)| kind.mesh_index());
-    dice.into_iter().unzip()
+    let (kinds, values) = dice.into_iter().unzip();
+    PhysicalDice { kinds, values }
 }
 
 fn fail(world: &mut World, request: &PendingPresentation, reason: RollFailure) {
@@ -920,7 +927,7 @@ mod tests {
                 term_lengths: vec![1],
                 dice: vec![RolledDie { kind: DieKind::D100, value, negate: false }],
             };
-            let (kinds, values) = physical_dice(&outcome);
+            let PhysicalDice { kinds, values } = physical_dice(&outcome);
             assert_eq!(kinds, vec![DieKind::D10, DieKind::D100]);
             let combined = values.iter().sum::<u32>();
             assert_eq!(if combined == 0 { 100 } else { combined }, value);

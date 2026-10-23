@@ -75,7 +75,7 @@ impl Options {
 
     /// What a die showing `value` asks for; reroll wins over explode, and a die explodes once.
     /// Thresholds outside the die's range never trigger.
-    pub fn modifier_for(&self, kind: DieKind, value: u32, exploded: bool) -> Option<Modifier> {
+    pub fn modifier_for(&self, kind: DieKind, value: u32, explosion: Explosion) -> Option<Modifier> {
         if let Some(threshold) = self.reroll_at_or_below
             && threshold < kind.sides()
             && value <= threshold
@@ -84,7 +84,7 @@ impl Options {
         }
         if let Some(threshold) = self.explode_at_or_above
             && threshold <= kind.sides()
-            && !exploded
+            && explosion == Explosion::Available
             && value >= threshold
         {
             return Some(Modifier::Explode);
@@ -97,13 +97,13 @@ impl Options {
         let mut budget = MAX_OPTION_ITERATIONS;
         let mut idx = 0;
         while idx < rolls.len() {
-            let mut exploded = false;
+            let mut explosion = Explosion::Available;
             while budget > 0 {
-                match self.modifier_for(kind, rolls[idx], exploded) {
+                match self.modifier_for(kind, rolls[idx], explosion) {
                     Some(Modifier::Reroll) => rolls[idx] = kind.roll(rng),
                     Some(Modifier::Explode) => {
                         rolls.push(kind.roll(rng));
-                        exploded = true;
+                        explosion = Explosion::Spent;
                     }
                     None => break,
                 }
@@ -117,10 +117,10 @@ impl Options {
     /// RNG-free trim of `rolls` in place.
     pub fn apply_keep(&self, rolls: &mut Vec<u32>) {
         if let Some(count) = self.keep_highest {
-            keep(rolls, count, true);
+            keep(rolls, count, Keep::Highest);
         }
         if let Some(count) = self.keep_lowest {
-            keep(rolls, count, false);
+            keep(rolls, count, Keep::Lowest);
         }
     }
 }
@@ -134,16 +134,31 @@ pub enum Modifier {
     Explode,
 }
 
-/// Sorts `rolls` (descending when `highest`) and truncates to `count`.
-fn keep(rolls: &mut Vec<u32>, count: u32, highest: bool) {
+/// Whether a die may still explode; each die explodes at most once.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Explosion {
+    /// The die has not exploded yet.
+    Available,
+    /// The die already added its extra die.
+    Spent,
+}
+
+/// Which end of the sorted rolls [`keep`] retains.
+#[derive(Clone, Copy)]
+enum Keep {
+    Highest,
+    Lowest,
+}
+
+/// Sorts `rolls` toward the kept end and truncates to `count`.
+fn keep(rolls: &mut Vec<u32>, count: u32, end: Keep) {
     let count = count as usize;
     if count >= rolls.len() {
         return;
     }
-    if highest {
-        rolls.sort_unstable_by(|first, second| second.cmp(first));
-    } else {
-        rolls.sort_unstable();
+    match end {
+        Keep::Highest => rolls.sort_unstable_by(|first, second| second.cmp(first)),
+        Keep::Lowest => rolls.sort_unstable(),
     }
     rolls.truncate(count);
 }
@@ -224,14 +239,17 @@ mod tests {
     #[test]
     fn modifier_for_prefers_reroll_and_explodes_once() {
         let options = Options::default().with_reroll_at_or_below(5).with_explode_at_or_above(5);
-        assert_eq!(options.modifier_for(DieKind::D6, 5, false), Some(Modifier::Reroll));
-        assert_eq!(options.modifier_for(DieKind::D6, 5, true), Some(Modifier::Reroll));
-        assert_eq!(options.modifier_for(DieKind::D6, 6, false), Some(Modifier::Explode));
-        assert_eq!(Options::default().with_reroll_at_or_below(6).modifier_for(DieKind::D6, 6, false), None);
+        assert_eq!(options.modifier_for(DieKind::D6, 5, Explosion::Available), Some(Modifier::Reroll));
+        assert_eq!(options.modifier_for(DieKind::D6, 5, Explosion::Spent), Some(Modifier::Reroll));
+        assert_eq!(options.modifier_for(DieKind::D6, 6, Explosion::Available), Some(Modifier::Explode));
+        assert_eq!(
+            Options::default().with_reroll_at_or_below(6).modifier_for(DieKind::D6, 6, Explosion::Available),
+            None
+        );
         let options = Options::default().with_explode_at_or_above(5);
-        assert_eq!(options.modifier_for(DieKind::D6, 5, false), Some(Modifier::Explode));
-        assert_eq!(options.modifier_for(DieKind::D6, 5, true), None);
-        assert_eq!(options.modifier_for(DieKind::D4, 4, false), None);
+        assert_eq!(options.modifier_for(DieKind::D6, 5, Explosion::Available), Some(Modifier::Explode));
+        assert_eq!(options.modifier_for(DieKind::D6, 5, Explosion::Spent), None);
+        assert_eq!(options.modifier_for(DieKind::D4, 4, Explosion::Available), None);
     }
 
     #[test]

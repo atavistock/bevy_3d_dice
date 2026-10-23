@@ -6,7 +6,7 @@ use bevy::math::{Mat3, Quat, Vec3};
 
 use crate::dice::DieKind;
 
-use super::orientations::DiceOrientations;
+use super::orientations::{DiceOrientations, Face};
 
 const SYMMETRY_TOLERANCE: f32 = 1e-5;
 
@@ -35,7 +35,7 @@ impl std::error::Error for SymmetryError {}
 /// Validated local rotations indexed by requested and settled face directions.
 #[derive(Clone, Debug)]
 pub struct FaceSymmetries {
-    faces: Vec<(String, Vec3)>,
+    faces: Vec<Face>,
     corrections: Vec<Quat>,
 }
 
@@ -48,11 +48,11 @@ impl FaceSymmetries {
         }
         let expected_faces = if kind == DieKind::D100 { 10 } else { kind.sides() as usize };
         if faces.len() != expected_faces
-            || faces.iter().any(|(_, direction)| !direction.is_finite() || !direction.is_normalized())
+            || faces.iter().any(|face| !face.direction.is_finite() || !face.direction.is_normalized())
         {
             return Err(SymmetryError::InvalidMetadata);
         }
-        let directions: Vec<Vec3> = faces.iter().map(|(_, direction)| *direction).collect();
+        let directions: Vec<Vec3> = faces.iter().map(|face| face.direction).collect();
         let tolerance_squared = SYMMETRY_TOLERANCE * SYMMETRY_TOLERANCE;
         for (index, direction) in directions.iter().enumerate() {
             if directions[..index].iter().any(|other| direction.distance_squared(*other) <= tolerance_squared) {
@@ -113,11 +113,11 @@ impl FaceSymmetries {
         if !settled_rotation.is_finite() || !settled_rotation.is_normalized() {
             return None;
         }
-        let source_index = self.faces.iter().position(|(label, _)| label == desired_label)?;
+        let source_index = self.faces.iter().position(|face| face.label == desired_label)?;
         let mut target_index = 0;
         let mut highest = f32::NEG_INFINITY;
-        for (index, (_, direction)) in self.faces.iter().enumerate() {
-            let height = (settled_rotation * *direction).y;
+        for (index, face) in self.faces.iter().enumerate() {
+            let height = (settled_rotation * face.direction).y;
             if height > highest {
                 highest = height;
                 target_index = index;
@@ -163,11 +163,11 @@ mod tests {
 
     fn check_all_pairs(kind: DieKind, orientations: &DiceOrientations, vertices: &[Vec3]) {
         let symmetries = FaceSymmetries::new(kind, orientations, vertices).unwrap();
-        for (_, settled_direction) in orientations.faces(kind) {
-            let settled_rotation = Quat::from_rotation_arc(*settled_direction, Vec3::Y);
-            for (desired_label, _) in orientations.faces(kind) {
-                let correction = symmetries.correction(desired_label, settled_rotation).unwrap();
-                assert_eq!(orientations.up_face(kind, settled_rotation * correction), Some(desired_label.as_str()));
+        for settled in orientations.faces(kind) {
+            let settled_rotation = Quat::from_rotation_arc(settled.direction, Vec3::Y);
+            for desired in orientations.faces(kind) {
+                let correction = symmetries.correction(&desired.label, settled_rotation).unwrap();
+                assert_eq!(orientations.up_face(kind, settled_rotation * correction), Some(desired.label.as_str()));
                 assert!(preserves_positions(correction, vertices, 1e-8));
             }
         }

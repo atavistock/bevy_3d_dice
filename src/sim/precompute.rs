@@ -195,8 +195,10 @@ fn simulate_attempt(app: &mut App, input: &SimulationInput, radius: f32, seed: u
     let mut entities = Vec::with_capacity(input.kinds.len());
     let mut positions = Vec::new();
     let mut rotations = Vec::new();
-    for (idx, position) in spawn_positions(input, radius).into_iter().enumerate() {
-        let (entity, rotation) = spawn_die(app, input, idx, position, &mut random);
+    let starts = spawn_positions(input, radius);
+    for (idx, position) in starts.into_iter().enumerate() {
+        let rotation = random_rotation(&mut random);
+        let entity = spawn_die(app, input, idx, position, rotation, &mut random);
         entities.push(entity);
         positions.push(position.to_array());
         rotations.push(rotation.to_array());
@@ -274,29 +276,28 @@ fn spawn_positions(input: &SimulationInput, radius: f32) -> Vec<Vec3> {
         .collect()
 }
 
-/// Spawns die `idx` with a random rotation, inward throw, and spin.
+/// Uniform-angle Euler rotation for a freshly spawned die.
+fn random_rotation(random: &mut StdRng) -> Quat {
+    Quat::from_euler(EulerRot::XYZ, random.gen_range(0.0..TAU), random.gen_range(0.0..TAU), random.gen_range(0.0..TAU))
+}
+
+/// Spawns die `idx` at `rotation` with an inward throw and spin.
 fn spawn_die(
     app: &mut App,
     input: &SimulationInput,
     idx: usize,
     position: Vec3,
+    rotation: Quat,
     random: &mut StdRng,
-) -> (Entity, Quat) {
+) -> Entity {
     let arena = &input.arena;
-    let rotation = Quat::from_euler(
-        EulerRot::XYZ,
-        random.gen_range(0.0..TAU),
-        random.gen_range(0.0..TAU),
-        random.gen_range(0.0..TAU),
-    );
     let inward = (arena.center - position).with_y(0.0).normalize_or_zero();
     let speed =
         arena.spawn.speed * (arena.spawn.speed_min_factor + random.gen_range(0.0..1.0) * arena.spawn.speed_jitter);
     let velocity = inward * speed * (0.15 / (input.kinds.len() as f32).sqrt())
         + Vec3::NEG_Y * arena.spawn.speed * arena.spawn.vertical_velocity_fraction;
     let angular = random_unit(random) * arena.spawn.speed * arena.spawn.angular_speed_factor;
-    let entity = app
-        .world_mut()
+    app.world_mut()
         .spawn((
             RigidBody::Dynamic,
             input.colliders[idx].clone(),
@@ -309,8 +310,7 @@ fn spawn_die(
             AngularDamping(arena.physics.angular_damping),
             LinearDamping(arena.physics.linear_damping),
         ))
-        .id();
-    (entity, rotation)
+        .id()
 }
 
 /// Current pose, or `None` once it is non-finite or below `lowest_y`.
@@ -346,7 +346,7 @@ fn flatness(input: &SimulationInput, idx: usize, rotation: Quat) -> f32 {
         .orientations
         .faces(input.kinds[idx])
         .iter()
-        .map(|(_, direction)| (rotation * *direction).y)
+        .map(|face| (rotation * face.direction).y)
         .fold(f32::NEG_INFINITY, f32::max)
 }
 
@@ -493,8 +493,6 @@ mod tests {
         assert_eq!(recording.positions.len(), recording.rotations.len());
         let (position, rotation) = recording.pose(0, recording.duration()).expect("final pose");
         assert!((position.y - 0.5).abs() < 0.05);
-        assert!(
-            cube_input().orientations.faces(DieKind::D6).iter().any(|(_, direction)| (rotation * *direction).y > 0.985)
-        );
+        assert!(cube_input().orientations.faces(DieKind::D6).iter().any(|face| (rotation * face.direction).y > 0.985));
     }
 }

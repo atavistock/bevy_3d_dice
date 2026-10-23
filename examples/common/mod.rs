@@ -103,7 +103,8 @@ pub fn drive_text_input(
     mut inputs: Query<(Entity, &TextInput, &mut Text)>,
     mut submitted: MessageWriter<TextInputSubmitted>,
 ) {
-    for event in events.read().filter(|event| event.state.is_pressed()) {
+    let presses = events.read().filter(|event| event.state.is_pressed());
+    for event in presses {
         for (entity, input, mut text) in inputs.iter_mut() {
             let current = text.0.strip_prefix(&input.prompt).unwrap_or("").to_string();
             match &event.logical_key {
