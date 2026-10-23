@@ -82,7 +82,30 @@ fn report(mut completed: MessageReader<RollComplete>) {
 
 `RollFailed` reports rolls that cannot complete: invalid input, unavailable assets, or interrupted playback.
 
-## Forcing a result
+## Custom arenas
+
+```rust
+use bevy_3d_dice::render::{DefaultArena, DiceArena, Diceset};
+
+fn setup(mut commands: Commands) {
+    let diceset = commands.spawn(Diceset::embedded("halloween")).id();
+    commands.spawn((
+        DiceArena::default()
+            .name("table")
+            .center(0.0, 0.0, 0.0)
+            .size(12.0, 5.0, 6.0)
+            .diceset(diceset),
+        DefaultArena,
+    ));
+}
+```
+
+- `Diceset::embedded(slug)` loads an enabled diceset feature.
+- `Diceset::custom("my_diceset")` loads `assets/my_diceset.glb` and reads its orientations; use `Diceset::custom_with(path, orientations)` when they live elsewhere.
+- Spawn several `DiceArena` entities for separate rolling regions; they can share one `Diceset`. Target one with `roller.roll_in(arena, roll)`.
+- `DicePlugin::gravity` sets simulation gravity without touching host physics; change `DiceSimulationGravity.acceleration` at runtime. Arena floor and walls exist only in the background simulation.
+
+## Forcing a result (playback)
 
 Decide the faces yourself (a server roll, a replay, a scripted moment) and the dice land on them. The throw is still a recorded physics trajectory; each die is pre-rotated by a symmetry of its mesh so the requested face settles on top.
 
@@ -111,29 +134,6 @@ fn cast(mut roller: DiceRoller) {
 - A d100 value is `1..=100`; `100` lands as `00` and `0`. A d10 value of `10` lands on `0`.
 
 Generated rolls play the same way, so every diceset needs numeric face labels in `extras.dice_orientations` and rotationally symmetric meshes. The embedded dicesets qualify; otherwise rolls fail with `RollFailure::InvalidGeometry`.
-
-## Custom arenas
-
-```rust
-use bevy_3d_dice::render::{DefaultArena, DiceArena, Diceset};
-
-fn setup(mut commands: Commands) {
-    let diceset = commands.spawn(Diceset::embedded("halloween")).id();
-    commands.spawn((
-        DiceArena::default()
-            .name("table")
-            .center(0.0, 0.0, 0.0)
-            .size(12.0, 5.0, 6.0)
-            .diceset(diceset),
-        DefaultArena,
-    ));
-}
-```
-
-- `Diceset::embedded(slug)` loads an enabled diceset feature.
-- `Diceset::custom("my_diceset")` loads `assets/my_diceset.glb` and reads its orientations; use `Diceset::custom_with(path, orientations)` when they live elsewhere.
-- Spawn several `DiceArena` entities for separate rolling regions; they can share one `Diceset`. Target one with `roller.roll_in(arena, roll)`.
-- `DicePlugin::gravity` sets simulation gravity without touching host physics; change `DiceSimulationGravity.acceleration` at runtime. Arena floor and walls exist only in the background simulation.
 
 ## How playback works
 
